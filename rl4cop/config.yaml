@@ -1,0 +1,39 @@
+graph_size: 50
+node_dim: 2
+random_range: 0
+encoder_type: mha
+gnn_framework: pyg # or dgl
+pyg_conv_type: transformer_conv
+embedding_dim: 128
+n_layers: 6
+group_size: ${graph_size}
+add_init_projection: true # only for mha_encoder
+n_heads: 8 # only for mha_encoder
+n_encoding_neighbors: 20 # only for gnn_encoder
+n_decoding_neighbors: null
+tanh_clipping: 10
+total_epoch: 300
+epoch_size: 100000
+val_size: 10000
+train_batch_size: 512
+val_batch_size: 256
+learning_rate: 1e-3
+weight_decay: 1e-6
+data_distribution: uniform # or normal
+seed: 1234
+gpus: [0]
+precision: 32
+val_type: x8Aug_nTraj
+# default_run_name: TSP-N${graph_size}G${group_size}-PYG${pyg_conv_type}KE${n_encoding_neighbors}L${n_layers}E${embedding_dim}KD${local_attention_size}-s${seed}-${now:%m%dT%H%M}
+default_run_name: TSP-N${graph_size}G${group_size}-${encoder_type}${n_layers}E${embedding_dim}KD${n_decoding_neighbors}-s${seed}-${now:%m%dT%H%M}
+wandb: true
+wandb_project: pomo_tsp_path
+run_name: null
+save_dir: ./outputs/
+n_clusters: ${graph_size}
+lstsp_size: 1000
+pretrained_model_path: ./pretrained_models
+n_lstsp_instances: 100
+
+# load_path: null
+norm_reward: false

@@ -1,0 +1,105 @@
+# trainer
+seed: 1234
+run_name: null
+default_run_name: TSP-N${graph_size}-${encoder_type}${n_layers}E${embedding_dim}KE${n_encoding_neighbors}-s${seed}-${now:%m%dT%H%M}
+wandb: false
+wandb_project: train_task
+load_path: null
+gpus: [5]
+save_dir: pl_logs
+precision: 32
+total_epoch: 10
+log_fig_freq: 1
+
+# model parameters
+input_dim: 8
+embedding_dim: 128
+hidden_dim: 512
+acotr_mid_dim: 128
+init_a_std_log: -1
+input_e_dim: 1
+node_dim: 2
+extra_node_dim: 2
+n_layers: 2
+n_encoding_neighbors: 20
+pyg_conv_type: gen_conv
+encoder_type: pixel
+
+#low level model
+low_level_load_path: checkpoints/lowlevel/200_greedy_12_layer/last.ckpt
+low_level_sample_size: 200
+low_level_training: True
+low_level_buffer_size: 10000
+low_level_update_time: 20
+low_level_lr: 1e-4
+low_level_batch_size: 12
+
+# memory
+memory_limit: 10000
+window_length: 1
+sample_size: 200
+experience_items: 6
+
+# env
+env_num: 64
+nb_states: 4
+nb_actions: 2
+action_max: 1.0
+action_min: 0.0
+k: 40
+frag_len: 200
+max_new_nodes: 190
+max_improvement_step: 0
+tsp_graph_reuse_times: 1
+no_depot: False
+
+# random process
+ou_theta: 0.15
+ou_sigma: 0.2
+ou_mu: 0.0
+epsilon: 20000 # linear decay of exploration policy
+
+# dataset
+graph_size: 1000
+random_range: 0
+data_distribution: "uniform"
+
+# training and validating
+val_freq: 5
+epoch_size: 200
+val_size: 16
+val_data_path: data/cluster/tsp${graph_size}_test_concorde.txt
+train_batch_size: 64 # total samples = env_num * target_step * repeat_time
+val_batch_size: 16
+lr_enc: 3e-4
+lr_actor: 3e-4
+lr_critic: 3e-4
+weight_decay: 1e-6
+tau: 0.005 # moving average for target network
+grad_clip: 1
+grad_method: norm
+aux_loss: false
+aux_weight: 5
+
+# ppo
+reward_scale: 1.0
+gamma: 1.0
+lambda_aux: 0.05
+lambda_entropy: 0.02
+lambda_a_value: 1.0
+lambda_gae_adv: 0.9
+ratio_clip: 0.2
+target_steps: 64
+repeat_times: 2
+target_entropy: 0.2
+target_entropy_beta: 0.0002
+
+# behavior cloning
+behavior_cloning_epoch: 0
+behavior_cloning_target_step: 1024
+behavior_cloning_update_times: 200
+
+# options
+greedy_reward: false
+average_reward: false
+float_available_status: false
