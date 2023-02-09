@@ -84,7 +84,7 @@ class LSTSPSolver:
             return total_length
 
 
-@hydra.main(config_name="config")
+@hydra.main(config_name="config", version_base="1.1")
 def run(cfg) -> None:
     pl.seed_everything(1234)
     if os.path.isabs(cfg.pretrained_model_path):

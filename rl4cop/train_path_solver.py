@@ -482,7 +482,7 @@ class PathSolver(pl.LightningModule):
         )
 
 
-@hydra.main(config_path="./", config_name="config")
+@hydra.main(config_path="./", config_name="config", version_base="1.1")
 def run(cfg: DictConfig) -> None:
     pl.seed_everything(cfg.seed)
     cfg.run_name = cfg.run_name or cfg.default_run_name

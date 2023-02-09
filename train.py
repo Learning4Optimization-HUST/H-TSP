@@ -10,7 +10,7 @@ from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning.loggers import TensorBoardLogger, WandbLogger
 
 
-@hydra.main(config_path=".", config_name="config_ppo")
+@hydra.main(config_path=".", config_name="config_ppo", version_base="1.1")
 def run(cfg: DictConfig) -> None:
     pl.seed_everything(cfg.seed)
     cfg.run_name = cfg.run_name or cfg.default_run_name

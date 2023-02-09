@@ -30,7 +30,7 @@ def main(args):
     bsz = args.batch_size
 
     ckpt = torch.load(args.upper_model)
-    with initialize(config_path="."):
+    with initialize(config_path=".", version_base="1.1"):
         cfg = OmegaConf.create(ckpt['hyper_parameters'])
 
     cfg.low_level_load_path = args.lower_model
