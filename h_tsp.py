@@ -96,6 +96,63 @@ class GreedySolver(LowLevelSolver):
         return new_path, length
 
 
+class FarthestInsertSolver(LowLevelSolver):
+
+    def solve(self, x: np.ndarray, fragment: List[int]) -> Tuple[List[int], float]:
+        if len(fragment) == 0:
+            return []
+        fragment_pos = x.take(fragment, axis=0)
+        frag_len = len(fragment)
+
+        available_nodes = set(range(frag_len))
+        positions = fragment_pos
+        tour = np.array([0, frag_len-1])
+
+        nodes_arr = np.ma.masked_array([i for i in available_nodes])
+        best_distances = np.ma.masked_array(cdist(positions[nodes_arr], positions[tour], 'euclidean').min(axis=1))
+
+        # We want the most distant node, so we get the max
+        index_to_remove = best_distances.argmax()
+        next_id = nodes_arr[index_to_remove]
+
+        # Add the most distant point, as well as the first point to close the tour, we'll be inserting from here
+        tour = np.insert(tour, 1, next_id)
+        available_nodes.remove(0)
+        available_nodes.remove(frag_len-1)
+        available_nodes.remove(next_id)
+        nodes_arr[index_to_remove] = np.ma.masked
+        best_distances[index_to_remove] = np.ma.masked
+        # Takes two arrays of points and returns the array of distances
+        def dist_arr(x1, x2):
+            return np.sqrt(((x1 - x2)**2).sum(axis=1))
+
+        # This is our selection method we will be using, it will give us the index in the masked array of the selected node,
+        # the city id of the selected node, and the updated distance array.
+        def get_next_insertion_node(nodes, positions, prev_id, best_distances):
+            best_distances = np.minimum(cdist(positions[nodes], positions[prev_id].reshape(-1, 2), 'euclidean').min(axis=1), best_distances)
+            max_index = best_distances.argmax()
+            return max_index, nodes[max_index], best_distances
+
+        while len(available_nodes) > 0:
+            index_to_remove, next_id, best_distances = get_next_insertion_node(nodes_arr, positions, next_id, best_distances)
+            
+            # Finding the insertion point
+            c_ik = cdist(positions[tour[:-1]], positions[next_id].reshape(-1, 2))
+            c_jk = cdist(positions[tour[1:]], positions[next_id].reshape(-1, 2))
+            c_ij = dist_arr(positions[tour[:-1]],positions[tour[1:]]).reshape(-1, 1)
+            i = (c_ik + c_jk - c_ij).argmin()
+            
+            tour = np.insert(tour, i+1, next_id)
+
+            available_nodes.remove(next_id)
+            nodes_arr[index_to_remove] = np.ma.masked
+            best_distances[index_to_remove] = np.ma.masked
+
+        new_path = [fragment[i] for i in tour]
+
+        return new_path, None
+
+
 class RLSolver(LowLevelSolver):
     def __init__(self, low_level_model: nn.Module, sample_size: int = 200) -> None:
         self._solver_model = low_level_model
