@@ -139,6 +139,5 @@ pl_logs/
 outputs/
 .netrc
 .amltconfig
-*.txt
 *.prof
 *trace.json

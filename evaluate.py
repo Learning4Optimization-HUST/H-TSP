@@ -10,11 +10,11 @@ from rl4cop.train_path_solver import PathSolver
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--lower_model", type=str, help="Path to the lower level model checkpoint")
-    parser.add_argument("--upper_model", type=str, help="Path to the higher level model checkpoint")
+    parser.add_argument("--upper_model", type=str, help="Path to the upper level model checkpoint")
     parser.add_argument('--repeat_times', type=int, default=1)
     parser.add_argument("--graph_size", type=int, default=1000)
     parser.add_argument("--frag_len", type=int, default=200, help="Sub-problem size")
-    parser.add_argument("--max_new_cities", type=int, default=190)
+    parser.add_argument("--max_new_cities", type=int, default=190, help="Maximum number of new cities in sub-problem")
     parser.add_argument("--k", type=int, default=40)
     parser.add_argument("--data_augment", default=False, action='store_true')
     parser.add_argument("--improvement_step", type=int, default=0, help="Number of improvement steps")
