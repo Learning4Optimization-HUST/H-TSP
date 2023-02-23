@@ -34,7 +34,7 @@ Note that [LKH-3](http://akira.ruc.dk/~keld/research/LKH-3/) is a TSP/VRP solver
 
 ### Using Conda (Not tested)
 
-One can use the [conda](https://anaconda.org/) package management system to build the development environment:
+You can use the [conda](https://anaconda.org/) package management system to build the development environment:
 
 ```bash
 conda create --name htsp --file requirements.txt
@@ -52,7 +52,7 @@ Note that [LKH-3](http://akira.ruc.dk/~keld/research/LKH-3/) still needs to be i
 
 [Docker](https://www.docker.com/) and [nvidia-docker](https://github.com/NVIDIA/nvidia-docker) is required.
 
-One can build a development environment for the `H-TSP` by using Docker with the `Dockerfile`:
+You can build a development environment for the `H-TSP` by using Docker with the `Dockerfile`:
 ```bash
 docker build -t htsp .
 ```
@@ -90,5 +90,7 @@ To test trained model, run
 python evaluate.py --help
 ```
 This will show you the parameters that need to be set.
+
+The trained model checkpoints and datasets can be downloaded from: [model](https://drive.google.com/file/d/1hphZSKd_COia3xqqh5HxAI9Nc_K9BBzQ/view?usp=share_link) and [data](https://drive.google.com/file/d/1vbJADC2Bw0s5Aps-3LjvjN5l-ER_oHhu/view?usp=share_link).
 
 **For more details about the parameters, please refer to the source code and our paper.**
