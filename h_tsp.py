@@ -559,7 +559,7 @@ class Env:
         predict_coord = self.scale_action(predict_coord)
         fragment, _ = self.get_fragment_knn(predict_coord)
         # solve subproblem
-        if isinstance(solver, RLSolver) or isinstance(solver, LKHSolver):
+        if isinstance(solver, (RLSolver, LKHSolver)):
             new_paths, _ = solver.solve(self.x[None, ...], fragment[None, ...])
             new_path = new_paths[0]
         else:
