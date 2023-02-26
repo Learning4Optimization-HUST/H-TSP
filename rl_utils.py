@@ -232,7 +232,6 @@ def heatmap(data, ax=None, cbar_kw=None, cbarlabel="", **kwargs):
 
     ax.set_xticks(np.arange(data.shape[1] + 1) - 0.5, minor=True)
     ax.set_yticks(np.arange(data.shape[0] + 1) - 0.5, minor=True)
-    # ax.grid(which="minor", color="w", linestyle="-", linewidth=1)
     ax.tick_params(which="minor", bottom=False, left=False)
 
     return im, cbar

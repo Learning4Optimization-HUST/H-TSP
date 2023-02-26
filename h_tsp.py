@@ -265,7 +265,6 @@ class LargeState:
 
         self.numpy_knn_neighbor = self.knn_neighbor.cpu().numpy()
         assert len(init_tour) == 2 or len(init_tour) == 0
-        # mask.shape = [N]
         self.selected_mask = torch.zeros(
             x.shape[0], dtype=torch.bool, device=self.device
         )
@@ -283,7 +282,6 @@ class LargeState:
         self.current_tour_len = (
             utils.get_tour_distance(init_tour, self.dist_matrix) / DISTANCE_SCALE
         )
-        # self.current_tour_len = 0.0
         utils.update_neighbor_coord_(self.neighbor_coord, self.current_tour, self.x)
         self.mask(self.current_tour)
 
@@ -1326,7 +1324,6 @@ class HTSP_PPO(pl.LightningModule):
         traj = self.explore_vec_env(self.cfg.target_steps)
         steps, r_exp = update_buffer(self.memory, traj)
         self.log_dict({"train/env_steps": steps, "train/env_reward": r_exp})
-        # env_time = time.time()-train_start
 
         # update agent
         optim_actor, optim_critic, optim_low_level = self.optimizers(
@@ -1334,7 +1331,6 @@ class HTSP_PPO(pl.LightningModule):
         )
         if self.cfg.low_level_training:
             self.low_level_training(optim_low_level)
-        # buf_time = time.time() - train_start
         log_obj_critic = []
         log_prob_ratio = []
         log_obj_aux = []
@@ -1475,7 +1471,6 @@ class HTSP_PPO(pl.LightningModule):
             utils.soft_update(self.encoder_target, self.encoder, self.cfg.tau)
 
         a_std_log = getattr(self.actor, "a_std_log", torch.zeros(1)).mean()
-        # train_time = time.time() - train_start
         self.log_dict(
             {
                 "loss/value": np.mean(log_obj_critic),
@@ -1495,7 +1490,6 @@ class HTSP_PPO(pl.LightningModule):
             }
         )
 
-        # print(f"\n[Rank {self.local_rank}] Env time: {env_time}, buffer time: {buf_time}, train time: {train_time}\n")
 
         return OrderedDict({})
 

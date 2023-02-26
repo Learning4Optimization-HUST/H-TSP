@@ -17,7 +17,6 @@ import matplotlib
 import matplotlib.pyplot as plt
 import math
 
-# from cluster.cluster_datagen import lkh_solver
 import tsplib95
 import lkh
 import time
