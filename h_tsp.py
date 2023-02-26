@@ -1490,7 +1490,6 @@ class HTSP_PPO(pl.LightningModule):
             }
         )
 
-
         return OrderedDict({})
 
     def validation_step(self, batch, _):
