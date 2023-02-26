@@ -25,9 +25,7 @@ class IMPALACNN(nn.ModuleDict):
         This corresponds to the number of unit for the last layer.
     """
 
-    def __init__(
-        self, input_channels, output_dim, depths=None, input_shape=None
-    ):
+    def __init__(self, input_channels, output_dim, depths=None, input_shape=None):
         if depths is None:
             depths = [16, 32, 32]
         if input_shape is None:
