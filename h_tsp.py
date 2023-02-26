@@ -506,8 +506,8 @@ class Env:
             max_cities = max(
                 self.max_new_nodes, self.frag_len - self.state.current_num_cities
             )
-            new_cities = list()
-            knn_deque = list()
+            new_cities = []
+            knn_deque = []
             selected_set = set()
             knn_deque.append(new_city_start)
             selected_set.add(new_city_start)
@@ -985,9 +985,9 @@ class HTSP_PPO(pl.LightningModule):
         self.save_hyperparameters(cfg)
 
         # Memory
-        self.memory = list()
+        self.memory = []
         self.traj_list = [
-            [list() for _ in range(cfg.experience_items)] for _ in range(cfg.env_num)
+            [[] for _ in range(cfg.experience_items)] for _ in range(cfg.env_num)
         ]
         self.frag_buffer = utils.FragmengBuffer(
             cfg.low_level_buffer_size, cfg.frag_len, cfg.node_dim
@@ -1098,8 +1098,8 @@ class HTSP_PPO(pl.LightningModule):
 
     @torch.no_grad()
     def explore_vec_env(self, target_steps: int) -> list:
-        traj_list = list()
-        experience = list()
+        traj_list = []
+        experience = []
         # initialize env
         if self.states is None:
             tsp_data = torch.cat(
@@ -1185,9 +1185,9 @@ class HTSP_PPO(pl.LightningModule):
         return buf_r_sum, buf_adv_v
 
     def splice_trajectory(self, buf_srdan, last_done):
-        out_srdan = list()
+        out_srdan = []
         for j in range(self.cfg.experience_items):
-            cur_items = list()
+            cur_items = []
             buf_items = buf_srdan.pop(0)  # buf_srdan[j]
 
             for env_i in range(self.cfg.env_num):
