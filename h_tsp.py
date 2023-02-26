@@ -730,7 +730,7 @@ class VecEnv:
 
     @property
     def done(self):
-        return all([e.done for e in self.envs])
+        return all(e.done for e in self.envs)
 
     def step(
         self,
