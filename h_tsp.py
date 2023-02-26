@@ -97,7 +97,6 @@ class GreedySolver(LowLevelSolver):
 
 
 class FarthestInsertSolver(LowLevelSolver):
-
     def solve(self, x: np.ndarray, fragment: List[int]) -> Tuple[List[int], float]:
         if len(fragment) == 0:
             return []
@@ -106,10 +105,12 @@ class FarthestInsertSolver(LowLevelSolver):
 
         available_nodes = set(range(frag_len))
         positions = fragment_pos
-        tour = np.array([0, frag_len-1])
+        tour = np.array([0, frag_len - 1])
 
         nodes_arr = np.ma.masked_array([i for i in available_nodes])
-        best_distances = np.ma.masked_array(cdist(positions[nodes_arr], positions[tour], 'euclidean').min(axis=1))
+        best_distances = np.ma.masked_array(
+            cdist(positions[nodes_arr], positions[tour], "euclidean").min(axis=1)
+        )
 
         # We want the most distant node, so we get the max
         index_to_remove = best_distances.argmax()
@@ -118,31 +119,39 @@ class FarthestInsertSolver(LowLevelSolver):
         # Add the most distant point, as well as the first point to close the tour, we'll be inserting from here
         tour = np.insert(tour, 1, next_id)
         available_nodes.remove(0)
-        available_nodes.remove(frag_len-1)
+        available_nodes.remove(frag_len - 1)
         available_nodes.remove(next_id)
         nodes_arr[index_to_remove] = np.ma.masked
         best_distances[index_to_remove] = np.ma.masked
+
         # Takes two arrays of points and returns the array of distances
         def dist_arr(x1, x2):
-            return np.sqrt(((x1 - x2)**2).sum(axis=1))
+            return np.sqrt(((x1 - x2) ** 2).sum(axis=1))
 
         # This is our selection method we will be using, it will give us the index in the masked array of the selected node,
         # the city id of the selected node, and the updated distance array.
         def get_next_insertion_node(nodes, positions, prev_id, best_distances):
-            best_distances = np.minimum(cdist(positions[nodes], positions[prev_id].reshape(-1, 2), 'euclidean').min(axis=1), best_distances)
+            best_distances = np.minimum(
+                cdist(
+                    positions[nodes], positions[prev_id].reshape(-1, 2), "euclidean"
+                ).min(axis=1),
+                best_distances,
+            )
             max_index = best_distances.argmax()
             return max_index, nodes[max_index], best_distances
 
         while len(available_nodes) > 0:
-            index_to_remove, next_id, best_distances = get_next_insertion_node(nodes_arr, positions, next_id, best_distances)
-            
+            index_to_remove, next_id, best_distances = get_next_insertion_node(
+                nodes_arr, positions, next_id, best_distances
+            )
+
             # Finding the insertion point
             c_ik = cdist(positions[tour[:-1]], positions[next_id].reshape(-1, 2))
             c_jk = cdist(positions[tour[1:]], positions[next_id].reshape(-1, 2))
-            c_ij = dist_arr(positions[tour[:-1]],positions[tour[1:]]).reshape(-1, 1)
+            c_ij = dist_arr(positions[tour[:-1]], positions[tour[1:]]).reshape(-1, 1)
             i = (c_ik + c_jk - c_ij).argmin()
-            
-            tour = np.insert(tour, i+1, next_id)
+
+            tour = np.insert(tour, i + 1, next_id)
 
             available_nodes.remove(next_id)
             nodes_arr[index_to_remove] = np.ma.masked
@@ -239,9 +248,9 @@ class LargeState:
 
         if dist_matrix is None:
             self.dist_matrix = dist_matrix = torch.cdist(
-            x.type(torch.float64) * DISTANCE_SCALE,
-            x.type(torch.float64) * DISTANCE_SCALE,
-        ).type(torch.float32)
+                x.type(torch.float64) * DISTANCE_SCALE,
+                x.type(torch.float64) * DISTANCE_SCALE,
+            ).type(torch.float32)
         else:
             assert isinstance(dist_matrix, torch.Tensor)
             self.dist_matrix = dist_matrix
@@ -279,8 +288,7 @@ class LargeState:
         self.mask(self.current_tour)
 
     def move_to(self, new_path: List[int]) -> None:
-        """ state transition given current state (partial tour) and action (new path)
-        """
+        """state transition given current state (partial tour) and action (new path)"""
         if self.current_num_cities == 0:
             self.current_tour = new_path
         else:
@@ -322,8 +330,7 @@ class LargeState:
         self.mask(new_path)
 
     def mask(self, new_path: List[int]) -> None:
-        """ update mask status w.r.t new path
-        """
+        """update mask status w.r.t new path"""
         self.selected_mask[new_path] = True
         # update mask of available starting cities for k-NN process
         self.available_mask[new_path] = True
@@ -336,8 +343,7 @@ class LargeState:
     def get_nearest_cluster_city_idx(
         self, old_cities: List[int], new_cities: List[int]
     ) -> int:
-        """ find the index of the old city nearest to given new cities
-        """
+        """find the index of the old city nearest to given new cities"""
         assert old_cities
         assert new_cities
         city_idx = utils.get_nearest_cluster_city_idx(
@@ -347,16 +353,14 @@ class LargeState:
         return city_idx
 
     def get_nearest_old_city_idx(self, predict_coord: torch.Tensor) -> int:
-        """ find the index of the new city nearest to given coordinates
-        """
+        """find the index of the new city nearest to given coordinates"""
         assert predict_coord.shape == (2,)
         city_idx = utils.get_nearest_city_idx(self.x, predict_coord, self.selected_mask)
 
         return city_idx
 
     def get_nearest_new_city_idx(self, predict_coord: torch.Tensor) -> int:
-        """ find the index of the new city nearest to given coordinates
-        """
+        """find the index of the new city nearest to given coordinates"""
         assert predict_coord.shape == (2,)
         city_idx = utils.get_nearest_city_idx(
             self.x, predict_coord, ~self.selected_mask
@@ -365,8 +369,7 @@ class LargeState:
         return city_idx
 
     def get_nearest_new_city_coord(self, predict_coord: torch.Tensor) -> int:
-        """ find the coordinate of the available city nearest to given coordinates
-        """
+        """find the coordinate of the available city nearest to given coordinates"""
 
         city_idx = self.get_nearest_new_city_idx(predict_coord)
         city_coord = self.x[city_idx]
@@ -375,8 +378,7 @@ class LargeState:
         return city_coord
 
     def get_nearest_avail_city_idx(self, predict_coord: torch.Tensor) -> int:
-        """ find the index of the available city nearest to given coordinates
-        """
+        """find the index of the available city nearest to given coordinates"""
         assert predict_coord.shape == (2,)
         city_idx = utils.get_nearest_city_idx(
             self.x, predict_coord, self.available_mask
@@ -385,8 +387,7 @@ class LargeState:
         return city_idx
 
     def get_nearest_avail_city_coord(self, predict_coord: torch.Tensor) -> int:
-        """ find the coordinate of the available city nearest to given coordinates
-        """
+        """find the coordinate of the available city nearest to given coordinates"""
 
         city_idx = self.get_nearest_avail_city_idx(predict_coord)
         city_coord = self.x[city_idx]
@@ -395,8 +396,7 @@ class LargeState:
         return city_coord
 
     def to_tensor(self) -> torch.Tensor:
-        """ concatenate `x`, `selected_mask` to produce an state
-        """
+        """concatenate `x`, `selected_mask` to produce an state"""
         available_mask = self.available_mask
         return torch.cat(
             [
@@ -436,16 +436,13 @@ class Env:
         max_new_nodes: int = 160,
         max_improvement_step: int = 5,
     ):
-
         self.k = k
         # length of the fragment sent to low-level agent
         self.frag_len = frag_len
         self.max_new_nodes = max_new_nodes
         self.max_improvement_step = max_improvement_step
 
-    def reset(
-        self, x: torch.Tensor, no_depot=False
-    ) -> Tuple[LargeState, float, bool]:
+    def reset(self, x: torch.Tensor, no_depot=False) -> Tuple[LargeState, float, bool]:
         self.x = x.type(torch.float32)
         self.device = x.device
         self.graph_size = self.N = x.shape[0]
@@ -577,8 +574,7 @@ class Env:
         greedy_reward: bool = False,
         average_reward: bool = False,
     ) -> Tuple[LargeState, float, bool]:
-        """ step function for VecEnv
-        """
+        """step function for VecEnv"""
         # raise exception if already done
         if self.done:
             raise RuntimeError("Environment has terminated!")
@@ -622,14 +618,12 @@ class Env:
 
     @staticmethod
     def scale_action(a):
-        """ scale action from [-1, 1] to [0, 1]
-        """
+        """scale action from [-1, 1] to [0, 1]"""
         return a * 0.5 + 0.5
 
     @staticmethod
     def unscale_action(a):
-        """ unscale action from [0, 1] to [-1, 1]
-        """
+        """unscale action from [0, 1] to [-1, 1]"""
         return a * 2 - 1
 
     def random_action(self):
@@ -720,10 +714,7 @@ class VecEnv:
                 )
             )
 
-        states = [
-            self.envs[i].reset(x[i], self.no_depot)
-            for i in range(self.B)
-        ]
+        states = [self.envs[i].reset(x[i], self.no_depot) for i in range(self.B)]
         self.states = states
 
         return torch.stack(states).type(torch.float32)
@@ -764,7 +755,9 @@ class VecEnv:
         new_cities = []
         start_cities = []
         for env, a in zip(active_envs, active_acts):
-            frag, new_city, start_city = env.get_fragment_knn(a,)
+            frag, new_city, start_city = env.get_fragment_knn(
+                a,
+            )
             fragments.append(frag)
             new_cities.append(new_city)
             start_cities.append(start_city)
@@ -829,7 +822,9 @@ class VecEnv:
             {
                 "fragments": fragments,
                 "new_cities": new_cities,
-                "start_city": torch.stack(start_cities,),
+                "start_city": torch.stack(
+                    start_cities,
+                ),
             },
         )
 
@@ -851,7 +846,7 @@ class VecEnv:
 
 def readDataFile(filePath):
     """
-        read validation dataset from "https://github.com/Spider-scnu/TSP"
+    read validation dataset from "https://github.com/Spider-scnu/TSP"
     """
     res = []
     with open(filePath, "r") as fp:
@@ -953,10 +948,12 @@ class HTSP_PPO(pl.LightningModule):
 
         if cfg.encoder_type == "pixel":
             self.encoder = models.IMPALAEncoder(
-                input_dim=cfg.input_dim, embedding_dim=cfg.embedding_dim,
+                input_dim=cfg.input_dim,
+                embedding_dim=cfg.embedding_dim,
             )
             self.encoder_target = models.IMPALAEncoder(
-                input_dim=cfg.input_dim, embedding_dim=cfg.embedding_dim,
+                input_dim=cfg.input_dim,
+                embedding_dim=cfg.embedding_dim,
             )
         else:
             raise TypeError(f"Encoder type {cfg.encoder_type} not supported!")
@@ -1047,9 +1044,7 @@ class HTSP_PPO(pl.LightningModule):
             weight_decay=self.cfg.weight_decay,
         )
 
-        sche_actor = torch.optim.lr_scheduler.StepLR(
-            optim_actor, step_size=2, gamma=1
-        )
+        sche_actor = torch.optim.lr_scheduler.StepLR(optim_actor, step_size=2, gamma=1)
         sche_critic = torch.optim.lr_scheduler.StepLR(
             optim_critic, step_size=2, gamma=1
         )
@@ -1057,12 +1052,16 @@ class HTSP_PPO(pl.LightningModule):
             optim_low_level, step_size=2, gamma=1
         )
 
-        return [optim_actor, optim_critic, optim_low_level], [sche_actor, sche_critic, sche_low_level]
+        return [optim_actor, optim_critic, optim_low_level], [
+            sche_actor,
+            sche_critic,
+            sche_low_level,
+        ]
 
     def select_action(self, state: np.ndarray) -> np.ndarray:
         """
         Select an action given a state.
-        
+
         :param state: a state in a shape (state_dim, ).
         :return: a action in a shape (action_dim, ) where each action is clipped into range(-1, 1).
         """
@@ -1076,7 +1075,7 @@ class HTSP_PPO(pl.LightningModule):
     def select_actions(self, state: torch.Tensor) -> tuple:
         """
         Select actions given an array of states.
-        
+
         :param state: an array of states in a shape (batch_size, state_dim, ).
         :return: an array of actions in a shape (batch_size, action_dim, ) where each action is clipped into range(-1, 1).
         """
@@ -1161,7 +1160,7 @@ class HTSP_PPO(pl.LightningModule):
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Calculate the **reward-to-go** and **advantage estimation** using GAE.
-        
+
         :param buf_len: the length of the ``ReplayBuffer``.
         :param buf_reward: a list of rewards for the state-action pairs.
         :param buf_mask: a list of masks computed by the product of done signal and discount factor.
@@ -1222,7 +1221,10 @@ class HTSP_PPO(pl.LightningModule):
             data_distribution=self.cfg.data_distribution,
         )
         return DataLoader(
-            dataset, batch_size=tsp_batch_size, num_workers=0, pin_memory=True,
+            dataset,
+            batch_size=tsp_batch_size,
+            num_workers=0,
+            pin_memory=True,
         )
 
     def tsp_data(self):
@@ -1247,7 +1249,10 @@ class HTSP_PPO(pl.LightningModule):
     def train_dataloader(self) -> DataLoader:
         dataset = DummyDataset(((1,)), num_samples=self.cfg.epoch_size)
         return DataLoader(
-            dataset, batch_size=1, num_workers=os.cpu_count(), pin_memory=True,
+            dataset,
+            batch_size=1,
+            num_workers=os.cpu_count(),
+            pin_memory=True,
         )
 
     def val_dataloader(self) -> DataLoader:
@@ -1288,7 +1293,6 @@ class HTSP_PPO(pl.LightningModule):
             sche_actor.get_last_lr()[0],
         )
 
-
     def low_level_training(self, optim_low_level: torch.optim.Optimizer) -> None:
         self.low_level_model.group_size = self.low_level_model.cfg.group_size
         self.low_level_model.cfg.fine_tune = True
@@ -1311,7 +1315,11 @@ class HTSP_PPO(pl.LightningModule):
                 on_epoch=True,
             )
 
-    def training_step(self, batch: torch.Tensor, _,) -> OrderedDict:
+    def training_step(
+        self,
+        batch: torch.Tensor,
+        _,
+    ) -> OrderedDict:
         # interact with environment
         # train_start = time.time()
         traj = self.explore_vec_env(self.cfg.target_steps)
@@ -1537,14 +1545,14 @@ class HTSP_PPO(pl.LightningModule):
                         }
                     )
                     wandb_logger.log(
-                        {f"val/tour_last": wandb.Image(fig_tour),}
+                        {
+                            f"val/tour_last": wandb.Image(fig_tour),
+                        }
                     )
                     plt.close()
                     wandb_logger = None
 
-        average_len = np.mean(
-            [e.state.current_tour_len.item() for e in val_env.envs]
-        )
+        average_len = np.mean([e.state.current_tour_len.item() for e in val_env.envs])
         discounted_rewards = torch.zeros_like(log_rewards[0])
         for r in log_rewards[::-1]:
             discounted_rewards = discounted_rewards * self.cfg.gamma + r
