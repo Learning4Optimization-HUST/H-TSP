@@ -475,9 +475,8 @@ class Env:
     ):
         result = []
         for n in neighbor:
-            if n not in selected_set:
-                if not selected_mask[n]:
-                    result.append(n)
+            if n not in selected_set and not selected_mask[n]:
+                result.append(n)
         return result
 
     def get_fragment_knn(
