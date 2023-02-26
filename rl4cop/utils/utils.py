@@ -23,7 +23,9 @@ def multi_head_attention(q, k, v, mask=None):
         score += mask[:, None, :, :].expand_as(score)
 
     shp = [q.size(0), q.size(-2), q.size(1) * q.size(-1)]
-    attn = torch.matmul(F.softmax(score.float(), dim=3, dtype=torch.float32).type_as(score), v).transpose(1, 2)
+    attn = torch.matmul(
+        F.softmax(score.float(), dim=3, dtype=torch.float32).type_as(score), v
+    ).transpose(1, 2)
     return attn.reshape(*shp)
 
 
@@ -49,32 +51,31 @@ def augment_xy_data_by_8_fold(xy_data):
     dat8 = torch.cat((1 - y, 1 - x), dim=2)
 
     # data_augmented.shape = [8*B, N, 2]
-    data_augmented = torch.cat((dat1, dat2, dat3, dat4, dat5, dat6, dat7, dat8),
-                               dim=0)
+    data_augmented = torch.cat((dat1, dat2, dat3, dat4, dat5, dat6, dat7, dat8), dim=0)
 
     return data_augmented
 
 
-def make_graphs(batch, n_neighbors=25, gnn_framework='dgl'):
+def make_graphs(batch, n_neighbors=25, gnn_framework="dgl"):
     graph_list = []
-    topk_distances, indices = torch.topk(torch.cdist(batch, batch),
-                                         k=n_neighbors + 1,
-                                         largest=False)
+    topk_distances, indices = torch.topk(
+        torch.cdist(batch, batch), k=n_neighbors + 1, largest=False
+    )
     for i in range(batch.size(0)):
         x = batch[i]
         u = indices[i, :, 1:].flatten()
         v = indices[i, :, 0:1].repeat(1, n_neighbors).flatten()
-        if gnn_framework == 'dgl':
+        if gnn_framework == "dgl":
             g = dgl.graph((u, v))
-            g.ndata['feat'] = x
-            g.edata['feat'] = topk_distances[i, :, 1:].reshape(-1, 1)
+            g.ndata["feat"] = x
+            g.edata["feat"] = topk_distances[i, :, 1:].reshape(-1, 1)
         else:
             edge_index = torch.stack([u, v])
             edge_attr = topk_distances[i, :, 1:].reshape(-1, 1)
             g = pyg.data.Data(x=x, edge_index=edge_index, edge_attr=edge_attr)
         graph_list.append(g)
 
-    if gnn_framework == 'dgl':
+    if gnn_framework == "dgl":
         return dgl.batch(graph_list).to(batch.device)
     else:
         return pyg.data.Batch.from_data_list(graph_list).to(batch.device)
@@ -82,25 +83,25 @@ def make_graphs(batch, n_neighbors=25, gnn_framework='dgl'):
 
 def make_dgl_graphs(batch, n_neighbors=25):
     graph_list = []
-    topk_distances, indices = torch.topk(torch.cdist(batch, batch),
-                                         k=n_neighbors + 1,
-                                         largest=False)
+    topk_distances, indices = torch.topk(
+        torch.cdist(batch, batch), k=n_neighbors + 1, largest=False
+    )
     for i in range(batch.size(0)):
         x = batch[i]
         u = indices[i, :, 1:].flatten()
         v = indices[i, :, 0:1].repeat(1, n_neighbors).flatten()
         g = dgl.graph((u, v))
-        g.ndata['feat'] = x
-        g.edata['feat'] = topk_distances[i, :, 1:].view(-1, 1)
+        g.ndata["feat"] = x
+        g.edata["feat"] = topk_distances[i, :, 1:].view(-1, 1)
         graph_list.append(g)
     return dgl.batch(graph_list).to(batch.device)
 
 
 def make_pyg_graphs(batch, n_neighbors=25):
     graph_list = []
-    topk_distances, indices = torch.topk(torch.cdist(batch, batch),
-                                         k=n_neighbors + 1,
-                                         largest=False)
+    topk_distances, indices = torch.topk(
+        torch.cdist(batch, batch), k=n_neighbors + 1, largest=False
+    )
     for i in range(batch.size(0)):
         x = batch[i]
         u = indices[i, :, 1:].flatten()
@@ -146,8 +147,7 @@ class TimeStat(object):
 
 
 class WindowStat(object):
-    """ Tool to maintain statistical data in a window.
-    """
+    """Tool to maintain statistical data in a window."""
 
     def __init__(self, window_size):
         self.items = [None] * window_size
@@ -163,21 +163,21 @@ class WindowStat(object):
     @property
     def mean(self):
         if self.count > 0:
-            return np.mean(self.items[:self.count])
+            return np.mean(self.items[: self.count])
         else:
             return None
 
     @property
     def min(self):
         if self.count > 0:
-            return np.min(self.items[:self.count])
+            return np.min(self.items[: self.count])
         else:
             return None
 
     @property
     def max(self):
         if self.count > 0:
-            return np.max(self.items[:self.count])
+            return np.max(self.items[: self.count])
         else:
             return None
 

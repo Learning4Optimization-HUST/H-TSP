@@ -48,8 +48,7 @@ def nodes_to_sample(node_pos: np.ndarray, max_demand: int = 9) -> Dict:
 def get_nearest_city_idx(
     x: torch.Tensor, predict_coord: torch.Tensor, mask: torch.Tensor
 ) -> int:
-    """ find the city nearest to given coordinates, return its coordinates
-    """
+    """find the city nearest to given coordinates, return its coordinates"""
     assert x.ndim == 2
     assert predict_coord.shape == (2,)
     assert mask.ndim == 1
@@ -68,8 +67,7 @@ def get_nearest_city_idx(
 def get_nearest_city_coord(
     x: torch.Tensor, predict_coord: torch.Tensor, mask: torch.Tensor
 ) -> torch.Tensor:
-    """ find the city nearest to given coordinates, return its coordinates
-    """
+    """find the city nearest to given coordinates, return its coordinates"""
     nearest_city = get_nearest_city_idx(x, predict_coord, mask)
     nearest_coord = x[nearest_city]
 
@@ -308,7 +306,12 @@ def visualize_route(
         node_shape="*",
     )
     nx.draw_networkx_edges(
-        G, pos, width=2, arrows=False, arrowsize=1, edgelist=edge_list,
+        G,
+        pos,
+        width=2,
+        arrows=False,
+        arrowsize=1,
+        edgelist=edge_list,
     )
 
     return fig
@@ -395,9 +398,9 @@ def MMD(x: torch.Tensor, y: torch.Tensor, kernel: str = "multiscale"):
     if kernel == "multiscale":
         bandwidth_range = [0.2, 0.5, 0.9, 1.3]
         for a in bandwidth_range:
-            XX += a ** 2 * (a ** 2 + dxx) ** -1
-            YY += a ** 2 * (a ** 2 + dyy) ** -1
-            XY += a ** 2 * (a ** 2 + dxy) ** -1
+            XX += a**2 * (a**2 + dxx) ** -1
+            YY += a**2 * (a**2 + dyy) ** -1
+            XY += a**2 * (a**2 + dxy) ** -1
 
     if kernel == "rbf":
         bandwidth_range = [10, 15, 20, 50]
@@ -411,42 +414,43 @@ def MMD(x: torch.Tensor, y: torch.Tensor, kernel: str = "multiscale"):
 
 class MeanStd(metaclass=abc.ABCMeta):
     """Abstract base class that keeps track of mean and standard deviation.
-  Modified from https://github.com/google-research/seed_rl/blob/f53c5be4ea083783fb10bdf26f11c3a80974fa03/agents/policy_gradient/modules/running_statistics.py"""
+    Modified from https://github.com/google-research/seed_rl/blob/f53c5be4ea083783fb10bdf26f11c3a80974fa03/agents/policy_gradient/modules/running_statistics.py
+    """
 
     @abc.abstractmethod
     def init(self, size):
         """Initializes normalization variables.
-    Args:
-      size: Integer with the dimensionality of the tracked tensor.
-    """
+        Args:
+          size: Integer with the dimensionality of the tracked tensor.
+        """
         raise NotImplementedError("`init` is not implemented.")
 
     def normalize(self, x):
         """Normalizes target values x using past target statistics.
-    Args:
-      x: <float32>[(...), size] tensor.
-    Returns:
-      <float32>[(...), size] normalized tensor.
-    """
+        Args:
+          x: <float32>[(...), size] tensor.
+        Returns:
+          <float32>[(...), size] normalized tensor.
+        """
         mean, std = self.get_mean_std()
         return (x - mean) / std
 
     def unnormalize(self, x):
         """Unnormalizes a corrected prediction x using past target statistics.
-    Args:
-      x: <float32>[(...), size] tensor.
-    Returns:
-      <float32>[(...), size] unnormalized tensor.
-    """
+        Args:
+          x: <float32>[(...), size] tensor.
+        Returns:
+          <float32>[(...), size] unnormalized tensor.
+        """
         mean, std = self.get_mean_std()
         return std * x + mean
 
     @abc.abstractmethod
     def update(self, data):
         """Updates normalization statistics.
-    Args:
-      data: <float32>[(...), size].
-    """
+        Args:
+          data: <float32>[(...), size].
+        """
         raise NotImplementedError("`update` is not implemented.")
 
     @abc.abstractmethod
@@ -457,21 +461,21 @@ class MeanStd(metaclass=abc.ABCMeta):
 
 class EMAMeanStd(MeanStd):
     """Tracks mean and standard deviation using an exponential moving average.
-  This works by keeping track of the first and second non-centralized moments
-  using an exponential average of the global batch means of these moments, i.e.,
-      new_1st_moment = (1-beta)*old_1st_moment + beta*mean(data)
-      new_2nd_moment = (1-beta)*old_2nd_moment + beta*mean(data**2).
-  Initially, mean and standard deviation are set to zero and one respectively.
-  """
+    This works by keeping track of the first and second non-centralized moments
+    using an exponential average of the global batch means of these moments, i.e.,
+        new_1st_moment = (1-beta)*old_1st_moment + beta*mean(data)
+        new_2nd_moment = (1-beta)*old_2nd_moment + beta*mean(data**2).
+    Initially, mean and standard deviation are set to zero and one respectively.
+    """
 
     def __init__(self, beta=1e-2, std_min_value=1e-6, std_max_value=1e6):
         """Creates a EMAMeanVariance.
-    Args:
-      beta: Float that determines how fast parameters are updated via the
-        formula `new_parameters = (1-beta)* old_parameters + beta*batch_mean`.
-      std_min_value: Float with the minimum value for the standard deviation.
-      std_max_value: Float with the maximum value for the standard deviation.
-    """
+        Args:
+          beta: Float that determines how fast parameters are updated via the
+            formula `new_parameters = (1-beta)* old_parameters + beta*batch_mean`.
+          std_min_value: Float with the minimum value for the standard deviation.
+          std_max_value: Float with the maximum value for the standard deviation.
+        """
         super().__init__()
         self._beta = beta
         self._std_min_value = std_min_value
@@ -481,21 +485,21 @@ class EMAMeanStd(MeanStd):
 
     def init(self, size):
         """Initializes normalization variables.
-    Args:
-      size: Integer with the dimensionality of the tracked tensor.
-    """
+        Args:
+          size: Integer with the dimensionality of the tracked tensor.
+        """
         self.first_moment = torch.zeros(size=[size], dtype=torch.float32)
         self.second_moment = torch.ones(size=[size], dtype=torch.float32)
 
     def update(self, data: torch.Tensor):
         """Updates normalization statistics.
-    Args:
-      data: <float32>[(...), size].
-    """
+        Args:
+          data: <float32>[(...), size].
+        """
         # Reduce tensors along all the dimensions except the last ones.
         reduce_dims = list(range(data.dim()))[:-1]
         batch_first_moment = torch.mean(data, dim=reduce_dims)
-        batch_second_moment = torch.mean(data ** 2, dim=reduce_dims)
+        batch_second_moment = torch.mean(data**2, dim=reduce_dims)
 
         # Updates the tracked moments. We do this by computing the difference to the
         # the current value as that allows us to use mean aggregation to make it
@@ -514,7 +518,7 @@ class EMAMeanStd(MeanStd):
 
     def get_mean_std(self):
         """Returns mean and standard deviation for current statistics."""
-        std = torch.sqrt(self.second_moment - self.first_moment ** 2)
+        std = torch.sqrt(self.second_moment - self.first_moment**2)
         std = torch.clip(std, self._std_min_value, self._std_max_value)
         # Multiplication with one converts the variable to a tensor with the value
         # at the time this function is called. This is important if the python
@@ -524,17 +528,17 @@ class EMAMeanStd(MeanStd):
 
 def merge_summed_variances(v1, v2, mu1, mu2, merged_mean, n1, n2):
     """Computes the (summed) variance of a combined series.
-  Args:
-    v1: summed variance of the first series.
-    v2: summed variance of the second series.
-    mu1: mean of the first series.
-    mu2: mean of the second series.
-    merged_mean: mean for the combined series.
-    n1: Number of datapoints in the first series.
-    n2: Number of datapoints in the second series.
-  Returns:
-    The summed variance for the combined series.
-  """
+    Args:
+      v1: summed variance of the first series.
+      v2: summed variance of the second series.
+      mu1: mean of the first series.
+      mu2: mean of the second series.
+      merged_mean: mean for the combined series.
+      n1: Number of datapoints in the first series.
+      n2: Number of datapoints in the second series.
+    Returns:
+      The summed variance for the combined series.
+    """
     return (
         v1
         + n1 * torch.square(mu1 - merged_mean)
@@ -551,28 +555,28 @@ def merge_means(mu1, mu2, n1, n2):
 
 class AverageMeanStd(MeanStd):
     """Tracks mean and standard deviation across all past samples.
-  This works by updating the mean and the sum of past variances with Welford's
-  algorithm using batches (see https://stackoverflow.com/questions/56402955/
-  whats-the-formula-for-welfords-algorithm-for-variance-std-with-batch-updates).
-  One limitation of this class is that it uses float32 to aggregate statistics,
-  which leads to inaccuracies after 7M batch due to limited float precision (see
-  b/160686691 for details). Use TwoLevelAverageMeanStd to work around that.
-  
-  Modified to torch version.
-  Attributes:
-    observation_count: float32 tf.Variable with observation counts.
-    update_count: int32 tf.Variable representing the number of times update() or
-      merge() have been called.
-    mean: float32 tf.Variable with mean.
-    summed_variance: float32 tf.Variable with summed variance of all samples.
-  """
+    This works by updating the mean and the sum of past variances with Welford's
+    algorithm using batches (see https://stackoverflow.com/questions/56402955/
+    whats-the-formula-for-welfords-algorithm-for-variance-std-with-batch-updates).
+    One limitation of this class is that it uses float32 to aggregate statistics,
+    which leads to inaccuracies after 7M batch due to limited float precision (see
+    b/160686691 for details). Use TwoLevelAverageMeanStd to work around that.
+
+    Modified to torch version.
+    Attributes:
+      observation_count: float32 tf.Variable with observation counts.
+      update_count: int32 tf.Variable representing the number of times update() or
+        merge() have been called.
+      mean: float32 tf.Variable with mean.
+      summed_variance: float32 tf.Variable with summed variance of all samples.
+    """
 
     def __init__(self, std_min_value=1e-6, std_max_value=1e6):
         """Creates a AverageMeanStd.
-    Args:
-      std_min_value: Float with the minimum value for the standard deviation.
-      std_max_value: Float with the maximum value for the standard deviation.
-    """
+        Args:
+          std_min_value: Float with the minimum value for the standard deviation.
+          std_max_value: Float with the maximum value for the standard deviation.
+        """
         super().__init__()
         self._std_min_value = std_min_value
         self._std_max_value = std_max_value
@@ -583,9 +587,9 @@ class AverageMeanStd(MeanStd):
 
     def init(self, size):
         """Initializes normalization variables.
-    Args:
-      size: Integer with the dimensionality of the tracked tensor.
-    """
+        Args:
+          size: Integer with the dimensionality of the tracked tensor.
+        """
         self.observation_count = torch.zeros(size=[size], dtype=torch.float32)
 
         self.update_count = torch.zeros(size=[], dtype=torch.float32)
@@ -594,9 +598,9 @@ class AverageMeanStd(MeanStd):
 
     def update(self, data: torch.Tensor):
         """Updates normalization statistics.
-    Args:
-      data: <float32>[(...), size].
-    """
+        Args:
+          data: <float32>[(...), size].
+        """
         # Reduce tensors along all the dimensions except the last ones.
         reduce_dims = list(range(data.dim()))[:-1]
 
