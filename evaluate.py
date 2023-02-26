@@ -10,7 +10,7 @@ from h_tsp import (
     utils,
     VecEnv,
     RLSolver,
-    )
+)
 
 
 def parse_args():
