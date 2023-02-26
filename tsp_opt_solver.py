@@ -4,22 +4,14 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 #
-import os
 import sys
 
 sys.path.append(".")
 import numpy as np
-import random
-import argparse
-import json
-import networkx as nx
-import matplotlib
-import matplotlib.pyplot as plt
 import math
 
 import tsplib95
 import lkh
-import time
 
 
 def tsp2concorde(sample):

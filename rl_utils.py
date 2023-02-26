@@ -7,7 +7,6 @@ import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
 import torch
-import torch.nn as nn
 
 
 def augment_xy_data_by_8_fold(xy_data):

@@ -3,10 +3,8 @@ import math
 import dgl.function as fn
 import numpy as np
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
 import torch_geometric as pyg
-import torch_scatter
 
 import rl4cop.utils.utils as utils
 
