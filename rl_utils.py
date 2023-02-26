@@ -182,7 +182,7 @@ def evaluating(net):
             net.train()
 
 
-def heatmap(data, ax=None, cbar_kw={}, cbarlabel="", **kwargs):
+def heatmap(data, ax=None, cbar_kw=None, cbarlabel="", **kwargs):
     """
     Create a heatmap from a numpy array and two lists of labels.
 
@@ -204,6 +204,8 @@ def heatmap(data, ax=None, cbar_kw={}, cbarlabel="", **kwargs):
     **kwargs
         All other arguments are forwarded to `imshow`.
     """
+    if cbar_kw is None:
+        cbar_kw = {}
 
     if not ax:
         ax = plt.gca()
