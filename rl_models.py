@@ -267,7 +267,7 @@ class IMPALAEncoder(nn.ModuleDict):
 class ActorPPO(nn.Module):
     """
     Actor class for **PPO** with stochastic, learnable, **state-independent** log standard deviation.
-    
+
     :param mid_dim[int]: the middle dimension of networks
     :param state_dim[int]: the dimension of state (the number of state vector)
     :param action_dim[int]: the dimension of action (the number of discrete action)
@@ -311,7 +311,7 @@ class ActorPPO(nn.Module):
     def forward(self, state):
         """
         The forward function.
-        
+
         :param state[np.array]: the input state.
         :return: the output tensor.
         """
@@ -320,7 +320,7 @@ class ActorPPO(nn.Module):
     def get_action(self, state):
         """
         The forward function with Gaussian noise.
-        
+
         :param state[np.array]: the input state.
         :return: the action and added noise.
         """
@@ -334,7 +334,7 @@ class ActorPPO(nn.Module):
     def get_logprob_entropy(self, state, action):
         """
         Compute the log of probability with current network.
-        
+
         :param state[np.array]: the input state.
         :param action[float]: the action.
         :return: the log of probability and entropy.
@@ -352,7 +352,7 @@ class ActorPPO(nn.Module):
     def get_old_logprob(self, _action, noise):  # noise = action - a_noise
         """
         Compute the log of probability with old network.
-        
+
         :param _action[float]: the action.
         :param noise[float]: the added noise when exploring.
         :return: the log of probability with old network.
@@ -363,7 +363,7 @@ class ActorPPO(nn.Module):
     def get_old_logprob_act(self, old_action, old_noise, action):
         """
         Compute the log of probability with out new noise.
-        
+
         :param _action[float]: the action.
         :param noise[float]: the added noise when exploring.
         :return: the log of probability with old network.
@@ -377,7 +377,7 @@ class ActorPPO(nn.Module):
 class CriticPPO(nn.Module):
     """
     The Critic class for **PPO**.
-    
+
     :param mid_dim[int]: the middle dimension of networks
     :param state_dim[int]: the dimension of state (the number of state vector)
     :param action_dim[int]: the dimension of action (the number of discrete action)
@@ -386,7 +386,10 @@ class CriticPPO(nn.Module):
     def __init__(self, state_dim, mid_dim, _action_dim):
         super().__init__()
 
-        nn_middle = nn.Sequential(nn.Linear(state_dim, mid_dim), nn.ReLU(),)
+        nn_middle = nn.Sequential(
+            nn.Linear(state_dim, mid_dim),
+            nn.ReLU(),
+        )
 
         self.net = nn.Sequential(
             nn_middle,
@@ -407,7 +410,7 @@ class CriticPPO(nn.Module):
     def forward(self, state):
         """
         The forward function to ouput the value of the state.
-        
+
         :param state[np.array]: the input state.
         :return: the output tensor.
         """
