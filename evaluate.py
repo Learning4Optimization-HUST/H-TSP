@@ -2,19 +2,15 @@ import time
 import torch
 import argparse
 import numpy as np
-from hydra import initialize, compose
+from hydra import initialize
 from omegaconf import OmegaConf
 from h_tsp import (
-    LKHSolver,
     readDataFile,
     HTSP_PPO,
     utils,
     VecEnv,
     RLSolver,
-    GreedySolver,
-    FarthestInsertSolver,
 )
-from rl4cop.train_path_solver import PathSolver
 
 
 def parse_args():

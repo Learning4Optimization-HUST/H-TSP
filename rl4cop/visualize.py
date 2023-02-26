@@ -1,6 +1,5 @@
 import matplotlib.pyplot as plt
 import mistree
-import numpy as np
 import torch
 from fast_pytorch_kmeans import KMeans
 

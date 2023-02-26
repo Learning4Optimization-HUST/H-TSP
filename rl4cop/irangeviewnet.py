@@ -1,6 +1,5 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 import utils
 
 BN_EPS = 1e-3
@@ -132,7 +131,7 @@ class iRangeViewNet(nn.Module):
 
         def init_weights(self, init_type):
             for m in self.modules():
-                if isinstance(m, nn.Conv2d) or isinstance(m, nn.ConvTranspose2d):
+                if isinstance(m, (nn.Conv2d, nn.ConvTranspose2d)):
                     if init_type == "kaiming_uniform":
                         utils.kaiming_init(m, distribution="uniform")
                     elif init_type == "kaiming_normal":

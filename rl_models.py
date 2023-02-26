@@ -25,9 +25,11 @@ class IMPALACNN(nn.ModuleDict):
         This corresponds to the number of unit for the last layer.
     """
 
-    def __init__(
-        self, input_channels, output_dim, depths=[16, 32, 32], input_shape=[100, 100]
-    ):
+    def __init__(self, input_channels, output_dim, depths=None, input_shape=None):
+        if depths is None:
+            depths = [16, 32, 32]
+        if input_shape is None:
+            input_shape = [100, 100]
         super().__init__()
         self.input_channels = input_channels
         input_shape = torch.as_tensor(input_shape)
@@ -145,10 +147,16 @@ class IMPALAEncoder(nn.ModuleDict):
         self,
         input_dim,
         embedding_dim,
-        bev_range=[0.0, 0.0, 1.0, 1.0],
-        bev_pixel_size=[0.01, 0.01],
-        depths=[16, 32, 32],
+        bev_range=None,
+        bev_pixel_size=None,
+        depths=None,
     ):
+        if bev_range is None:
+            bev_range = [0.0, 0.0, 1.0, 1.0]
+        if bev_pixel_size is None:
+            bev_pixel_size = [0.01, 0.01]
+        if depths is None:
+            depths = [16, 32, 32]
         # We assume CxHxW images (channels first)
         # Re-ordering will be done by pre-preprocessing or wrapper
         super().__init__()
@@ -186,7 +194,6 @@ class IMPALAEncoder(nn.ModuleDict):
         bev_grid_shape = (bev_range[2:] - bev_range[:2]) / bev_pixel_size
         bev_idxs = (batch[..., 0:2].view(-1, 2) - bev_range[0:2]) / bev_pixel_size
         bev_coords = torch.floor(bev_idxs).int()
-        # flatten, points.shape = [B*N, 1+input_dim]
         batch_idxs = (
             torch.arange(0, B).view(1, B).repeat(N, 1).t().flatten().to(batch.device)
         )
@@ -210,7 +217,6 @@ class IMPALAEncoder(nn.ModuleDict):
         bev_f_mean = torch_scatter.scatter_mean(points_xy, bev_unq_inv, dim=0)
         bev_f_cluster = points_xy - bev_f_mean[bev_unq_inv, :]
         bev_f_cluster = bev_f_cluster[:, [0, 1]]
-        # distance = torch.sqrt(torch.sum(points**2, dim=1, keepdim=True))
         mvf_input = torch.cat(
             [points_xy, bev_f_center, bev_f_cluster, extra_feat], dim=1
         ).contiguous()  # [B * N, input_dim + 4]
@@ -399,7 +405,6 @@ class CriticPPO(nn.Module):
             nn.Hardswish(),
             nn.Linear(mid_dim, 1),
         )
-        # layer_norm(self.net[-1], std=0.5)  # output layer for advantage value
         self.reset_parameter()
 
     def reset_parameter(self):

@@ -7,7 +7,6 @@ import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
 import torch
-import torch.nn as nn
 
 
 def augment_xy_data_by_8_fold(xy_data):
@@ -182,7 +181,7 @@ def evaluating(net):
             net.train()
 
 
-def heatmap(data, ax=None, cbar_kw={}, cbarlabel="", **kwargs):
+def heatmap(data, ax=None, cbar_kw=None, cbarlabel="", **kwargs):
     """
     Create a heatmap from a numpy array and two lists of labels.
 
@@ -204,6 +203,8 @@ def heatmap(data, ax=None, cbar_kw={}, cbarlabel="", **kwargs):
     **kwargs
         All other arguments are forwarded to `imshow`.
     """
+    if cbar_kw is None:
+        cbar_kw = {}
 
     if not ax:
         ax = plt.gca()
@@ -230,7 +231,6 @@ def heatmap(data, ax=None, cbar_kw={}, cbarlabel="", **kwargs):
 
     ax.set_xticks(np.arange(data.shape[1] + 1) - 0.5, minor=True)
     ax.set_yticks(np.arange(data.shape[0] + 1) - 0.5, minor=True)
-    # ax.grid(which="minor", color="w", linestyle="-", linewidth=1)
     ax.tick_params(which="minor", bottom=False, left=False)
 
     return im, cbar

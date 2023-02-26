@@ -43,7 +43,6 @@ def run(cfg: DictConfig) -> None:
         filename=cfg.encoder_type + "{epoch:02d}-{val/mean_tour_length:.2f}",
         save_top_k=3,
         save_last=True,
-        # mode="min",
         every_n_epochs=1,
     )
     tensorboard_logger = TensorBoardLogger(
@@ -82,7 +81,6 @@ def run(cfg: DictConfig) -> None:
         default_root_dir=root_dir,
         gpus=cfg.gpus,
         strategy="ddp",
-        #  sync_batchnorm=True,
         precision=cfg.precision,
         max_epochs=cfg.total_epoch,
         num_sanity_val_steps=0,
