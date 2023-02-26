@@ -15,7 +15,6 @@ import utils
 
 
 class GroupState:
-
     def __init__(self, group_size, x):
         # x.shape = [B, N, 2]
         self.batch_size = x.size(0)
@@ -26,32 +25,34 @@ class GroupState:
         # current_node.shape = [B, G]
         self.current_node = None
         # selected_node_list.shape = [B, G, selected_count]
-        self.selected_node_list = torch.zeros(x.size(0),
-                                              group_size,
-                                              0,
-                                              device=x.device).long()
+        self.selected_node_list = torch.zeros(
+            x.size(0), group_size, 0, device=x.device
+        ).long()
         # ninf_mask.shape = [B, G, N]
-        self.ninf_mask = torch.zeros(x.size(0),
-                                     group_size,
-                                     x.size(1),
-                                     device=x.device)
+        self.ninf_mask = torch.zeros(x.size(0), group_size, x.size(1), device=x.device)
 
     def move_to(self, selected_idx_mat):
         # selected_idx_mat.shape = [B, G]
         self.selected_count += 1
         self.current_node = selected_idx_mat
         self.selected_node_list = torch.cat(
-            (self.selected_node_list, selected_idx_mat[:, :, None]), dim=2)
+            (self.selected_node_list, selected_idx_mat[:, :, None]), dim=2
+        )
 
-        batch_idx_mat = torch.arange(self.batch_size)[:, None].expand(
-            self.batch_size, self.group_size).to(self.device)
-        group_idx_mat = torch.arange(self.group_size)[None, :].expand(
-            self.batch_size, self.group_size).to(self.device)
+        batch_idx_mat = (
+            torch.arange(self.batch_size)[:, None]
+            .expand(self.batch_size, self.group_size)
+            .to(self.device)
+        )
+        group_idx_mat = (
+            torch.arange(self.group_size)[None, :]
+            .expand(self.batch_size, self.group_size)
+            .to(self.device)
+        )
         self.ninf_mask[batch_idx_mat, group_idx_mat, selected_idx_mat] = -np.inf
 
 
 class Env:
-
     def __init__(
         self,
         x,
@@ -75,7 +76,7 @@ class Env:
         self.group_state.move_to(selected_idx_mat)
 
         # returning values
-        done = (self.group_state.selected_count == self.graph_size)
+        done = self.group_state.selected_count == self.graph_size
         if done:
             reward = -self._get_group_travel_distance()  # note the minus sign!
         else:
@@ -85,26 +86,26 @@ class Env:
     def _get_group_travel_distance(self):
         # ordered_seq.shape = [B, G, N, C]
         shp = (self.B, self.group_size, self.N, self.C)
-        gathering_index = self.group_state.selected_node_list.unsqueeze(
-            3).expand(*shp)
+        gathering_index = self.group_state.selected_node_list.unsqueeze(3).expand(*shp)
         seq_expanded = self.x[:, None, :, :].expand(*shp)
         ordered_seq = seq_expanded.gather(dim=2, index=gathering_index)
         rolled_seq = ordered_seq.roll(dims=2, shifts=-1)
         # segment_lengths.size = [B, G, N]
-        segment_lengths = ((ordered_seq - rolled_seq)**2).sum(3).sqrt()
+        segment_lengths = ((ordered_seq - rolled_seq) ** 2).sum(3).sqrt()
 
         group_travel_distances = segment_lengths.sum(2)
         return group_travel_distances
 
 
 class LSTSPCentroidDataset(Dataset):
-
-    def __init__(self,
-                 lstsp_size,
-                 n_clusters,
-                 node_dim=2,
-                 num_samples=100000,
-                 data_distribution='uniform'):
+    def __init__(
+        self,
+        lstsp_size,
+        n_clusters,
+        node_dim=2,
+        num_samples=100000,
+        data_distribution="uniform",
+    ):
         super(LSTSPCentroidDataset, self).__init__()
         self.lstsp_size = lstsp_size
         self.n_clusters = n_clusters
@@ -122,20 +123,21 @@ class LSTSPCentroidDataset(Dataset):
 
 
 class LoopSolver(pl.LightningModule):
-
     def __init__(self, cfg: DictConfig):
         super().__init__()
         if cfg.node_dim > 2:
-            assert 'noAug' in cfg.val_type, \
-                "High-dimension TSP doesn't support augmentation"
-        if cfg.encoder_type == 'mha':
+            assert (
+                "noAug" in cfg.val_type
+            ), "High-dimension TSP doesn't support augmentation"
+        if cfg.encoder_type == "mha":
             self.encoder = models.MHAEncoder(
                 n_layers=cfg.n_layers,
                 n_heads=cfg.n_heads,
                 embedding_dim=cfg.embedding_dim,
                 input_dim=cfg.node_dim,
-                add_init_projection=cfg.add_init_projection)
-        elif cfg.encoder_type == 'mlp':
+                add_init_projection=cfg.add_init_projection,
+            )
+        elif cfg.encoder_type == "mlp":
             self.encoder = torch.nn.Sequential(
                 torch.nn.Linear(cfg.node_dim, 128),
                 torch.nn.ReLU(),
@@ -145,54 +147,59 @@ class LoopSolver(pl.LightningModule):
                 torch.nn.ReLU(),
             )
         else:
-            if cfg.gnn_framework == 'pyg':
+            if cfg.gnn_framework == "pyg":
                 self.encoder = models.PYG_DeepGCNEncoder(
                     embedding_dim=cfg.embedding_dim,
                     input_e_dim=1,
                     input_h_dim=cfg.node_dim,
                     n_layers=cfg.n_layers,
                     n_neighbors=cfg.n_encoding_neighbors,
-                    conv_type=cfg.pyg_conv_type)
+                    conv_type=cfg.pyg_conv_type,
+                )
             else:
                 self.encoder = models.DGL_ResGatedGraphEncoder(
                     embedding_dim=cfg.embedding_dim,
                     input_e_dim=1,
                     input_h_dim=cfg.node_dim,
                     n_layers=cfg.n_layers,
-                    n_neighbors=cfg.n_encoding_neighbors)
-            assert cfg.precision == 32, 'GNN can only handle float32 or float64'
+                    n_neighbors=cfg.n_encoding_neighbors,
+                )
+            assert cfg.precision == 32, "GNN can only handle float32 or float64"
         self.decoder = models.LoopDecoder(
             embedding_dim=cfg.embedding_dim,
             n_heads=cfg.n_heads,
             tanh_clipping=cfg.tanh_clipping,
-            n_decoding_neighbors=cfg.n_decoding_neighbors)
+            n_decoding_neighbors=cfg.n_decoding_neighbors,
+        )
         self.cfg = cfg
         self.save_hyperparameters(cfg)
 
     def configure_optimizers(self):
-        optimizer = torch.optim.AdamW(self.parameters(),
-                                      lr=self.cfg.learning_rate *
-                                      len(self.cfg.gpus),
-                                      weight_decay=self.cfg.weight_decay)
-        lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer,
-                                                       step_size=2,
-                                                       gamma=0.99)
-        return [optimizer], [{'scheduler': lr_scheduler, 'interval': 'epoch'}]
+        optimizer = torch.optim.AdamW(
+            self.parameters(),
+            lr=self.cfg.learning_rate * len(self.cfg.gpus),
+            weight_decay=self.cfg.weight_decay,
+        )
+        lr_scheduler = torch.optim.lr_scheduler.StepLR(
+            optimizer, step_size=2, gamma=0.99
+        )
+        return [optimizer], [{"scheduler": lr_scheduler, "interval": "epoch"}]
 
     def forward(self, batch, val_type=None, return_pi=False):
         val_type = val_type or self.cfg.val_type
-        if val_type == 'x8Aug_nTraj':
+        if val_type == "x8Aug_nTraj":
             batch = utils.augment_xy_data_by_8_fold(batch)
 
         B, N, _ = batch.shape
-        G = 1 if val_type == 'noAug_1Traj' else N
+        G = 1 if val_type == "noAug_1Traj" else N
 
         env = Env(batch)
         s, r, d = env.reset(group_size=G)
         embeddings = self.encoder(batch)
         self.decoder.reset(batch, embeddings, s.ninf_mask)
-        first_action = torch.arange(G, device=self.device,
-                                    dtype=torch.long)[None, :].expand(B, G)
+        first_action = torch.arange(G, device=self.device, dtype=torch.long)[
+            None, :
+        ].expand(B, G)
         pi = first_action[..., None]
         s, r, d = env.step(first_action)
 
@@ -202,10 +209,10 @@ class LoopSolver(pl.LightningModule):
             pi = torch.cat([pi, action[..., None]], dim=-1)
             s, r, d = env.step(action)
 
-        if val_type == 'noAug_1Traj':
+        if val_type == "noAug_1Traj":
             max_reward = r
             best_pi = pi
-        elif val_type == 'noAug_nTraj':
+        elif val_type == "noAug_nTraj":
             max_reward, idx_dim_1 = r.max(dim=1)
             idx_dim_1 = idx_dim_1.reshape(B, 1, 1)
             best_pi = pi.gather(1, idx_dim_1.repeat(1, 1, N))
@@ -231,11 +238,14 @@ class LoopSolver(pl.LightningModule):
             n_clusters=self.cfg.n_clusters,
             node_dim=self.cfg.node_dim,
             num_samples=self.cfg.epoch_size,
-            data_distribution=self.cfg.data_distribution)
-        return DataLoader(dataset,
-                          num_workers=os.cpu_count(),
-                          batch_size=self.cfg.train_batch_size,
-                          pin_memory=True)
+            data_distribution=self.cfg.data_distribution,
+        )
+        return DataLoader(
+            dataset,
+            num_workers=os.cpu_count(),
+            batch_size=self.cfg.train_batch_size,
+            pin_memory=True,
+        )
 
     def val_dataloader(self):
         dataset = LSTSPCentroidDataset(
@@ -243,11 +253,14 @@ class LoopSolver(pl.LightningModule):
             n_clusters=self.cfg.n_clusters,
             node_dim=self.cfg.node_dim,
             num_samples=self.cfg.val_size,
-            data_distribution=self.cfg.data_distribution)
-        return DataLoader(dataset,
-                          batch_size=self.cfg.val_batch_size,
-                          num_workers=os.cpu_count(),
-                          pin_memory=True)
+            data_distribution=self.cfg.data_distribution,
+        )
+        return DataLoader(
+            dataset,
+            batch_size=self.cfg.val_batch_size,
+            num_workers=os.cpu_count(),
+            pin_memory=True,
+        )
 
     def training_step(self, batch, _):
         B, N, _ = batch.shape
@@ -263,25 +276,39 @@ class LoopSolver(pl.LightningModule):
         while not d:
             last_node_info = None
             if s.current_node is None:
-                first_action = torch.randperm(
-                    N, device=self.device)[None, :G].expand(B, G)
+                first_action = torch.randperm(N, device=self.device)[None, :G].expand(
+                    B, G
+                )
                 s, r, d = env.step(first_action)
                 continue
             else:
                 last_node = s.current_node
             action_probs = self.decoder(last_node)
-            action = action_probs.reshape(
-                B * G, -1).multinomial(1).squeeze(dim=1).reshape(B, G)
+            action = (
+                action_probs.reshape(B * G, -1)
+                .multinomial(1)
+                .squeeze(dim=1)
+                .reshape(B, G)
+            )
             # Check if sampling went OK, can go wrong due to bug on GPU
             # See https://discuss.pytorch.org/t/bad-behavior-of-multinomial-function/10232
-            while self.decoder.group_ninf_mask[batch_idx_range, group_idx_range,
-                                               action].bool().any():
-                action = action_probs.reshape(
-                    B * G, -1).multinomial(1).squeeze(dim=1).reshape(B, G)
-            chosen_action_prob = action_probs[batch_idx_range, group_idx_range,
-                                              action].reshape(B, G)
+            while (
+                self.decoder.group_ninf_mask[batch_idx_range, group_idx_range, action]
+                .bool()
+                .any()
+            ):
+                action = (
+                    action_probs.reshape(B * G, -1)
+                    .multinomial(1)
+                    .squeeze(dim=1)
+                    .reshape(B, G)
+                )
+            chosen_action_prob = action_probs[
+                batch_idx_range, group_idx_range, action
+            ].reshape(B, G)
             group_prob_list = torch.cat(
-                (group_prob_list, chosen_action_prob[:, :, None]), dim=2)
+                (group_prob_list, chosen_action_prob[:, :, None]), dim=2
+            )
             s, r, d = env.step(action)
         # Note that when G == 1, we can only use the PG without baseline so far
         advantage = r - r.mean(dim=1, keepdim=True) if G != 1 else r
@@ -289,12 +316,12 @@ class LoopSolver(pl.LightningModule):
         loss = (-advantage * log_prob).mean()
         length = -r.max(dim=1)[0].mean().clone().detach().item()
         self.log(
-            name='length',
+            name="length",
             value=length,
             prog_bar=True,
             # sync_dist=True
         )
-        return {'loss': loss, 'length': length}
+        return {"loss": loss, "length": length}
 
     def training_epoch_end(self, outputs):
         outputs = torch.as_tensor([item["length"] for item in outputs])
@@ -319,14 +346,18 @@ class LoopSolver(pl.LightningModule):
             },
             # sync_dist=True,
             on_epoch=True,
-            on_step=False)
+            on_step=False,
+        )
         self.print(
-            f'\nEpoch {self.current_epoch}: '
-            f'train_graph_size={self.train_graph_size}, ',
-            'train_performance={:.02f}±{:.02f}, '.format(
-                self.train_length_mean, self.train_length_std),
-            'val_performance={:.02f}±{:.02f}, '.format(self.val_length_mean,
-                                                       self.val_length_std))
+            f"\nEpoch {self.current_epoch}: "
+            f"train_graph_size={self.train_graph_size}, ",
+            "train_performance={:.02f}±{:.02f}, ".format(
+                self.train_length_mean, self.train_length_std
+            ),
+            "val_performance={:.02f}±{:.02f}, ".format(
+                self.val_length_mean, self.val_length_std
+            ),
+        )
 
 
 @hydra.main(config_name="config", version_base="1.1")
@@ -334,12 +365,12 @@ def run(cfg: DictConfig) -> None:
     pl.seed_everything(cfg.seed)
     cfg.run_name = cfg.run_name or cfg.default_run_name
     if cfg.save_dir is None:
-        root_dir = os.getcwd(),
+        root_dir = (os.getcwd(),)
     elif os.path.isabs(cfg.save_dir):
         root_dir = cfg.save_dir
     else:
         root_dir = os.path.join(hydra.utils.get_original_cwd(), cfg.save_dir)
-    root_dir = os.path.join(root_dir, f'{cfg.run_name}')
+    root_dir = os.path.join(root_dir, f"{cfg.run_name}")
 
     # build  LoopSolver
     loop_solver = LoopSolver(cfg)
@@ -353,25 +384,31 @@ def run(cfg: DictConfig) -> None:
         precision=cfg.precision,
         max_epochs=cfg.total_epoch,
         reload_dataloaders_every_epoch=True,
-        num_sanity_val_steps=0)
+        num_sanity_val_steps=0,
+    )
 
     # wandb logger
     if cfg.wandb:
-        os.makedirs(os.path.join(os.path.abspath(root_dir), 'wandb'))
-        trainer.logger = WandbLogger(name=cfg.run_name,
-                                     save_dir=root_dir,
-                                     project=cfg.wandb_project,
-                                     log_model=True,
-                                     save_code=True,
-                                     group=time.strftime(
-                                         "%Y%m%d", time.localtime()),
-                                     tags=cfg.default_run_name.split('-')[:-1])
+        os.makedirs(os.path.join(os.path.abspath(root_dir), "wandb"))
+        trainer.logger = WandbLogger(
+            name=cfg.run_name,
+            save_dir=root_dir,
+            project=cfg.wandb_project,
+            log_model=True,
+            save_code=True,
+            group=time.strftime("%Y%m%d", time.localtime()),
+            tags=cfg.default_run_name.split("-")[:-1],
+        )
 
     # training and save ckpt
     trainer.fit(loop_solver)
     trainer.save_checkpoint(
-        os.path.join(hydra.utils.get_original_cwd(), 'pretrained_models',
-                     'loop_solver_checkpoint.ckpt'))
+        os.path.join(
+            hydra.utils.get_original_cwd(),
+            "pretrained_models",
+            "loop_solver_checkpoint.ckpt",
+        )
+    )
 
 
 if __name__ == "__main__":

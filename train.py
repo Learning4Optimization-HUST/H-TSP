@@ -14,12 +14,16 @@ from pytorch_lightning.loggers import TensorBoardLogger, WandbLogger
 def run(cfg: DictConfig) -> None:
     pl.seed_everything(cfg.seed)
     cfg.run_name = cfg.run_name or cfg.default_run_name
-    
+
     if not os.path.isabs(cfg.low_level_load_path):
-        cfg.low_level_load_path = os.path.join(hydra.utils.get_original_cwd(), cfg.low_level_load_path)
+        cfg.low_level_load_path = os.path.join(
+            hydra.utils.get_original_cwd(), cfg.low_level_load_path
+        )
 
     if not os.path.isabs(cfg.val_data_path):
-        cfg.val_data_path = os.path.join(hydra.utils.get_original_cwd(), cfg.val_data_path)
+        cfg.val_data_path = os.path.join(
+            hydra.utils.get_original_cwd(), cfg.val_data_path
+        )
 
     if cfg.save_dir is None:
         root_dir = (os.getcwd(),)
@@ -42,7 +46,10 @@ def run(cfg: DictConfig) -> None:
         # mode="min",
         every_n_epochs=1,
     )
-    tensorboard_logger = TensorBoardLogger(name=cfg.run_name, save_dir=log_dir,)
+    tensorboard_logger = TensorBoardLogger(
+        name=cfg.run_name,
+        save_dir=log_dir,
+    )
     loggers = [tensorboard_logger]
     # wandb logger
     if cfg.wandb:

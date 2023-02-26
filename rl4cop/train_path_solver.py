@@ -74,7 +74,8 @@ class GroupState:
 
 class Env:
     def __init__(
-        self, x,
+        self,
+        x,
     ):
         self.x = x
         self.batch_size = self.B = x.size(0)
@@ -115,7 +116,7 @@ class Env:
         ordered_seq = seq_expanded.gather(dim=2, index=fixed_edge_idx)
         rolled_seq = ordered_seq.roll(dims=2, shifts=-1)
         delta = (ordered_seq - rolled_seq)[:, :, :-1, :]
-        edge_length = (delta ** 2).sum(3).sqrt().sum(2)
+        edge_length = (delta**2).sum(3).sqrt().sum(2)
         return edge_length
 
     def _get_path_distance(self) -> torch.Tensor:
@@ -126,7 +127,8 @@ class Env:
             .expand(self.B, self.group_size)
         )
         selected_node_list = torch.cat(
-            (self.group_state.selected_node_list, interval[:, :, None]), dim=2,
+            (self.group_state.selected_node_list, interval[:, :, None]),
+            dim=2,
         ).flatten()
         unique_selected_node_list = selected_node_list.unique_consecutive()
         assert unique_selected_node_list.shape[0] == (
@@ -141,7 +143,7 @@ class Env:
         ordered_seq = seq_expanded.gather(dim=2, index=gathering_index)
         rolled_seq = ordered_seq.roll(dims=2, shifts=-1)
         delta = ordered_seq - rolled_seq
-        tour_distances = (delta ** 2).sum(3).sqrt().sum(2)
+        tour_distances = (delta**2).sum(3).sqrt().sum(2)
         # minus the length of the fixed edge
         path_distances = tour_distances - self.fixed_edge_length
         return path_distances
@@ -276,7 +278,8 @@ class PathSolver(pl.LightningModule):
             s, r, d = env.step(action)
         interval = torch.tensor([-1], device=self.device).long().expand(B, G)
         selected_node_list = torch.cat(
-            (s.selected_node_list, interval[:, :, None]), dim=2,
+            (s.selected_node_list, interval[:, :, None]),
+            dim=2,
         ).flatten()
         unique_selected_node_list = selected_node_list.unique_consecutive()
         assert unique_selected_node_list.shape[0] == (
