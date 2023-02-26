@@ -94,3 +94,18 @@ This will show you the parameters that need to be set.
 The trained model checkpoints and datasets can be downloaded from: [model](https://drive.google.com/file/d/1hphZSKd_COia3xqqh5HxAI9Nc_K9BBzQ/view?usp=share_link) and [data](https://drive.google.com/file/d/1vbJADC2Bw0s5Aps-3LjvjN5l-ER_oHhu/view?usp=share_link).
 
 **For more details about the parameters, please refer to the source code and our paper.**
+
+## Citation
+
+If you find this work helpful, please consider cite our paper:
+
+```
+@inproceedings{pan2023h-tsp,
+    author = {Pan, Xuanhao and Jin, Yan and Ding, Yuandong and Feng, Mingxiao and Zhao, Li and Song, Lei and Bian, Jiang},
+    title = {H-TSP: Hierarchically Solving the Large-Scale Traveling Salesman Problem},
+    booktitle = {AAAI 2023},
+    year = {2023},
+    month = {February},
+    url = {https://www.microsoft.com/en-us/research/publication/h-tsp-hierarchically-solving-the-large-scale-traveling-salesman-problem/},
+}
+```
