@@ -944,7 +944,7 @@ class HTSP_PPO(pl.LightningModule):
         )
         # self.low_level_solver = LKHSolver()
 
-        if cfg.encoder_type == "pixel":
+        if cfg.encoder_type == "cnn":
             self.encoder = models.IMPALAEncoder(
                 input_dim=cfg.input_dim,
                 embedding_dim=cfg.embedding_dim,
