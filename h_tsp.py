@@ -624,7 +624,7 @@ class Env:
         return a * 2 - 1
 
     def random_action(self):
-        action = torch.randn(size=(self.node_dim,), device=self.device)
+        action = torch.rand(size=(self.node_dim,), device=self.device)
         return self.unscale_action(action)
 
     def heuristic_action(self):
@@ -826,7 +826,7 @@ class VecEnv:
         )
 
     def random_action(self):
-        return Env.unscale_action(torch.randn(size=(self.batch_size, self.node_dim)))
+        return Env.unscale_action(torch.rand(size=(self.batch_size, self.node_dim)))
 
     def heuristic_action(self):
         return torch.stack(
