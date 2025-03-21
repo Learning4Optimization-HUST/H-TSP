@@ -520,7 +520,8 @@ class Env:
         else:
             # refine a old fragment
             assert not self._improvement_done
-            nearest_old_city = self.state.get_nearest_old_city_idx(predict_coord)
+            # Set start_city as the nearest visited node to the nearest_old_city
+            start_city = self.state.get_nearest_old_city_idx(predict_coord)
             new_cities = []
         # extend fragment to `frag_len` with some old cities
         if self.state.current_num_cities != 0:
